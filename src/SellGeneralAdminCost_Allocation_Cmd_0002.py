@@ -45,6 +45,9 @@ def print_usage() -> None:
 
 
 EXECUTION_ROOT_DIRECTORY: Optional[str] = None
+PERIOD_BUTTON_ID_BASE: int = 1001
+PERIOD_BUTTON_ID_OFFSET: int = 0
+BN_DOUBLECLICKED: int = 5
 
 
 def get_script_base_directory() -> str:
@@ -104,6 +107,18 @@ def handle_period_left_double_click() -> None:
         return
 
     os.startfile(pszTargetPath)
+
+
+def handle_period_button_left_double_click_event(
+    iButtonId: int,
+    iNotifyCode: int,
+) -> bool:
+    if iButtonId != PERIOD_BUTTON_ID_BASE + PERIOD_BUTTON_ID_OFFSET:
+        return False
+    if iNotifyCode != BN_DOUBLECLICKED:
+        return False
+    handle_period_left_double_click()
+    return True
 
 
 def build_default_output_path(pszInputPlPath: str) -> str:
@@ -1505,17 +1520,11 @@ def build_cp_period_ranges_from_selected_range(
         if objRangeItem not in objResult:
             objResult.append(objRangeItem)
 
-    add_range(objRange)
-
     objFiscalARanges = split_by_fiscal_boundary(objStart, objEnd, 3)
-    if len(objFiscalARanges) >= 2:
-        add_range(objFiscalARanges[-2])
     if objFiscalARanges:
         add_range(objFiscalARanges[-1])
 
     objFiscalBRanges = split_by_fiscal_boundary(objStart, objEnd, 8)
-    if len(objFiscalBRanges) >= 2:
-        add_range(objFiscalBRanges[-2])
     if objFiscalBRanges:
         add_range(objFiscalBRanges[-1])
 
