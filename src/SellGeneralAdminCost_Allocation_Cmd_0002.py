@@ -1276,20 +1276,34 @@ def move_files_to_temp(objFilePaths: List[str], pszBaseDirectory: str) -> None:
         shutil.move(pszFilePath, pszTempPath)
 
 
-def move_pj_summary_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
+def move_cp_step_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
     pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
     os.makedirs(pszTempDirectory, exist_ok=True)
 
-    for iPrefix in range(1, 6):
-        pszFolderName: str = f"{iPrefix:04d}_PJサマリ"
-        pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
+    objConfigs: List[Tuple[str, str, List[str]]] = [
+        (
+            "0001_CP別_step0001-0005",
+            "0001_CP別_",
+            ["step0001_", "step0002_", "step0003_", "step0004_", "step0005_"],
+        ),
+        (
+            "0002_CP別_step0001-0005",
+            "0002_CP別_",
+            ["step0001_", "step0002_", "step0003_", "step0004_", "step0005_"],
+        ),
+    ]
+
+    for pszFolderName, pszPrefix, objStepPrefixes in objConfigs:
+        pszTargetDirectory = os.path.join(pszTempDirectory, pszFolderName)
         os.makedirs(pszTargetDirectory, exist_ok=True)
 
-        pszFilePrefix: str = f"{iPrefix:04d}_PJサマリ_"
         for pszFileName in os.listdir(pszBaseDirectory):
-            if not pszFileName.startswith(pszFilePrefix):
-                continue
             if not pszFileName.endswith(".tsv"):
+                continue
+            if not pszFileName.startswith(pszPrefix):
+                continue
+            bStepMatched: bool = any(f"_{pszStepPrefix}" in pszFileName for pszStepPrefix in objStepPrefixes)
+            if not bStepMatched:
                 continue
             pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
             if not os.path.isfile(pszSourcePath):
@@ -4993,7 +5007,7 @@ def create_cumulative_reports(pszPlPath: str) -> None:
     copy_cp_management_excels(pszCompanyManagementPath, pszGroupManagementPath)
     create_pj_summary_gross_profit_ranking_excel(pszDirectory)
     create_pj_summary_sales_cost_sg_admin_margin_excel(pszDirectory)
-    move_pj_summary_tsv_files_to_temp_subfolders(pszDirectory)
+    move_cp_step_tsv_files_to_temp_subfolders(pszDirectory)
 
 
 def copy_cp_step0005_vertical_files(pszDirectory: str, objPaths: List[Optional[str]]) -> None:
