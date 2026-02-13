@@ -1352,6 +1352,72 @@ def move_cp_step_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
             shutil.move(pszSourcePath, pszDestinationPath)
 
 
+def move_pj_summary_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
+    pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
+    os.makedirs(pszTempDirectory, exist_ok=True)
+
+    objFolderPatterns: List[Tuple[str, List[re.Pattern[str]]]] = [
+        (
+            "0001_PJサマリ",
+            [
+                re.compile(r"^0001_PJサマリ_step0001_.*_(単月|累計)_(損益計算書|製造原価報告書)\.tsv$"),
+                re.compile(r"^0001_PJサマリ_step000[2-5]_.*_(単月|累計)_損益計算書\.tsv$"),
+                re.compile(r"^0001_PJサマリ_step000[6-9]_.*_単月・累計_損益計算書\.tsv$"),
+            ],
+        ),
+        (
+            "0002_PJサマリ",
+            [
+                re.compile(r"^0002_PJサマリ_step000[12]_(単月|累計)_粗利金額ランキング\.tsv$"),
+                re.compile(r"^0002_PJサマリ_step0007_(単月|累計|単月・累計)_粗利金額ランキング\.tsv$"),
+                re.compile(r"^0002_PJサマリ_step00(08|09|10)_単月・累計_粗利金額ランキング\.tsv$"),
+                re.compile(r"^0002_PJサマリ_単月・累計_粗利金額ランキング\.tsv$"),
+            ],
+        ),
+        (
+            "0003_PJサマリ",
+            [
+                re.compile(r"^0003_PJサマリ_step000[1-3]_(単月|累計)_(損益計算書|製造原価報告書)\.tsv$"),
+                re.compile(r"^0003_PJサマリ_step0004_(単月|累計)_(損益計算書|製造原価報告書)(_vertical)?\.tsv$"),
+                re.compile(r"^0003_PJサマリ_step0005_(単月|累計)_(損益計算書|製造原価報告書)_E∪F(_vertical)?\.tsv$"),
+                re.compile(r"^0003_PJサマリ_step0006_(単月|累計)_(損益計算書|製造原価報告書)_E∪F\.tsv$"),
+                re.compile(r"^0003_PJサマリ_step0007_(単月|累計)_PL_CR\.tsv$"),
+            ],
+        ),
+        (
+            "0004_PJサマリ",
+            [
+                re.compile(r"^0004_PJサマリ_step000[1-5]_単月_損益計算書_\d{4}年\d{2}月\.tsv$"),
+                re.compile(r"^0004_PJサマリ_step000[1-5]_累計_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
+                re.compile(r"^0004_PJサマリ_step000[67]_単・累_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
+            ],
+        ),
+        (
+            "0005_PJサマリ",
+            [
+                re.compile(r"^0005_PJサマリ_step000[1-4]_単月_損益計算書_\d{4}年\d{2}月\.tsv$"),
+                re.compile(r"^0005_PJサマリ_step000[1-4]_累計_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
+                re.compile(r"^0005_PJサマリ_step000[5-7]_単・累_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
+            ],
+        ),
+    ]
+
+    objFileNames: List[str] = sorted(os.listdir(pszBaseDirectory))
+    for pszFolderName, objPatterns in objFolderPatterns:
+        pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
+        os.makedirs(pszTargetDirectory, exist_ok=True)
+        for pszFileName in objFileNames:
+            if not pszFileName.lower().endswith(".tsv"):
+                continue
+            if not any(objPattern.match(pszFileName) for objPattern in objPatterns):
+                continue
+            pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
+            if not os.path.isfile(pszSourcePath):
+                continue
+            pszDestinationPath: str = os.path.join(pszTargetDirectory, pszFileName)
+            shutil.move(pszSourcePath, pszDestinationPath)
+
+
 def find_selected_range_path(pszBaseDirectory: str) -> Optional[str]:
     objFileNames: List[str] = [
         "SellGeneralAdminCost_Allocation_Cmd_SelectedRange.txt",
@@ -5048,6 +5114,7 @@ def create_cumulative_reports(pszPlPath: str) -> None:
     create_pj_summary_gross_profit_ranking_excel(pszDirectory)
     create_pj_summary_sales_cost_sg_admin_margin_excel(pszDirectory)
     move_cp_step_tsv_files_to_temp_subfolders(pszDirectory)
+    move_pj_summary_tsv_files_to_temp_subfolders(pszDirectory)
 
 
 def copy_cp_step0005_vertical_files(pszDirectory: str, objPaths: List[Optional[str]]) -> None:
