@@ -1280,136 +1280,20 @@ def move_cp_step_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
     pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
     os.makedirs(pszTempDirectory, exist_ok=True)
 
-    objMonths: List[str] = [
-        "2025年04月",
-        "2025年05月",
-        "2025年06月",
-        "2025年07月",
-        "2025年08月",
-        "2025年09月",
-        "2025年10月",
-        "2025年11月",
-        "2025年12月",
-    ]
-    objCumulativeRanges: List[str] = [
-        "2025年04月-2025年08月",
-        "2025年04月-2025年12月",
-        "2025年09月-2025年12月",
+    objConfig: List[Tuple[str, str]] = [
+        ("0001_CP別_step0001-0005", "0001_CP別_"),
+        ("0002_CP別_step0001-0005", "0002_CP別_"),
     ]
 
-    def build_step0001_to_step0004_names(pszPrefix: str, iStartStep: int) -> List[str]:
-        objNames: List[str] = []
-        for iStep in range(iStartStep, 5):
-            pszStep: str = f"step{iStep:04d}"
-            for pszMonth in objMonths:
-                objNames.append(
-                    f"{pszPrefix}{pszStep}_単月_損益計算書_{pszMonth}.tsv"
-                )
-            for pszRange in objCumulativeRanges:
-                objNames.append(
-                    f"{pszPrefix}{pszStep}_累計_損益計算書_{pszRange}.tsv"
-                )
-        return objNames
-
-    def build_step0005_names(pszPrefix: str) -> List[str]:
-        objNames: List[str] = []
-        for pszMonth in objMonths:
-            objNames.append(
-                f"{pszPrefix}step0005_単月_損益計算書_{pszMonth}_vertical.tsv"
-            )
-        for pszRange in [
-            "2024年04月-2025年03月",
-            "2025年04月-2025年08月",
-            "2025年04月-2025年12月",
-            "2025年09月-2025年12月",
-        ]:
-            objNames.append(
-                f"{pszPrefix}step0005_累計_損益計算書_{pszRange}_vertical.tsv"
-            )
-        return objNames
-
-    objConfig: List[Tuple[str, List[str]]] = [
-        (
-            "0001_CP別_step0001-0005",
-            build_step0001_to_step0004_names("0001_CP別_", 1)
-            + build_step0005_names("0001_CP別_"),
-        ),
-        (
-            "0002_CP別_step0001-0005",
-            build_step0001_to_step0004_names("0002_CP別_", 2)
-            + build_step0005_names("0002_CP別_"),
-        ),
-    ]
-
-    for pszFolderName, objFileNames in objConfig:
+    for pszFolderName, pszPrefix in objConfig:
         pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
         os.makedirs(pszTargetDirectory, exist_ok=True)
-        for pszFileName in objFileNames:
-            pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
-            if not os.path.isfile(pszSourcePath):
+        for pszFileName in os.listdir(pszBaseDirectory):
+            if not pszFileName.startswith(pszPrefix):
                 continue
-            pszDestinationPath: str = os.path.join(pszTargetDirectory, pszFileName)
-            shutil.move(pszSourcePath, pszDestinationPath)
-
-
-def move_pj_summary_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
-    pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
-    os.makedirs(pszTempDirectory, exist_ok=True)
-
-    objFolderPatterns: List[Tuple[str, List[re.Pattern[str]]]] = [
-        (
-            "0001_PJサマリ",
-            [
-                re.compile(r"^0001_PJサマリ_step0001_.*_(単月|累計)_(損益計算書|製造原価報告書)\.tsv$"),
-                re.compile(r"^0001_PJサマリ_step000[2-5]_.*_(単月|累計)_損益計算書\.tsv$"),
-                re.compile(r"^0001_PJサマリ_step000[6-9]_.*_単月・累計_損益計算書\.tsv$"),
-            ],
-        ),
-        (
-            "0002_PJサマリ",
-            [
-                re.compile(r"^0002_PJサマリ_step000[12]_(単月|累計)_粗利金額ランキング\.tsv$"),
-                re.compile(r"^0002_PJサマリ_step0007_(単月|累計|単月・累計)_粗利金額ランキング\.tsv$"),
-                re.compile(r"^0002_PJサマリ_step00(08|09|10)_単月・累計_粗利金額ランキング\.tsv$"),
-                re.compile(r"^0002_PJサマリ_単月・累計_粗利金額ランキング\.tsv$"),
-            ],
-        ),
-        (
-            "0003_PJサマリ",
-            [
-                re.compile(r"^0003_PJサマリ_step000[1-3]_(単月|累計)_(損益計算書|製造原価報告書)\.tsv$"),
-                re.compile(r"^0003_PJサマリ_step0004_(単月|累計)_(損益計算書|製造原価報告書)(_vertical)?\.tsv$"),
-                re.compile(r"^0003_PJサマリ_step0005_(単月|累計)_(損益計算書|製造原価報告書)_E∪F(_vertical)?\.tsv$"),
-                re.compile(r"^0003_PJサマリ_step0006_(単月|累計)_(損益計算書|製造原価報告書)_E∪F\.tsv$"),
-                re.compile(r"^0003_PJサマリ_step0007_(単月|累計)_PL_CR\.tsv$"),
-            ],
-        ),
-        (
-            "0004_PJサマリ",
-            [
-                re.compile(r"^0004_PJサマリ_step000[1-5]_単月_損益計算書_\d{4}年\d{2}月\.tsv$"),
-                re.compile(r"^0004_PJサマリ_step000[1-5]_累計_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
-                re.compile(r"^0004_PJサマリ_step000[67]_単・累_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
-            ],
-        ),
-        (
-            "0005_PJサマリ",
-            [
-                re.compile(r"^0005_PJサマリ_step000[1-4]_単月_損益計算書_\d{4}年\d{2}月\.tsv$"),
-                re.compile(r"^0005_PJサマリ_step000[1-4]_累計_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
-                re.compile(r"^0005_PJサマリ_step000[5-7]_単・累_損益計算書_\d{4}年\d{2}月-\d{4}年\d{2}月\.tsv$"),
-            ],
-        ),
-    ]
-
-    objFileNames: List[str] = sorted(os.listdir(pszBaseDirectory))
-    for pszFolderName, objPatterns in objFolderPatterns:
-        pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
-        os.makedirs(pszTargetDirectory, exist_ok=True)
-        for pszFileName in objFileNames:
-            if not pszFileName.lower().endswith(".tsv"):
+            if "_step0004_" not in pszFileName:
                 continue
-            if not any(objPattern.match(pszFileName) for objPattern in objPatterns):
+            if not pszFileName.endswith("_vertical.tsv"):
                 continue
             pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
             if not os.path.isfile(pszSourcePath):
@@ -5114,7 +4998,6 @@ def create_cumulative_reports(pszPlPath: str) -> None:
     create_pj_summary_gross_profit_ranking_excel(pszDirectory)
     create_pj_summary_sales_cost_sg_admin_margin_excel(pszDirectory)
     move_cp_step_tsv_files_to_temp_subfolders(pszDirectory)
-    move_pj_summary_tsv_files_to_temp_subfolders(pszDirectory)
 
 
 def copy_cp_step0005_vertical_files(pszDirectory: str, objPaths: List[Optional[str]]) -> None:
