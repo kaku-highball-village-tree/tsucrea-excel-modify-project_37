@@ -1276,6 +1276,32 @@ def move_files_to_temp(objFilePaths: List[str], pszBaseDirectory: str) -> None:
         shutil.move(pszFilePath, pszTempPath)
 
 
+def move_cp_step_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
+    pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
+    os.makedirs(pszTempDirectory, exist_ok=True)
+
+    objConfig: List[Tuple[str, str]] = [
+        ("0001_CP別_step0001-0005", "0001_CP別_"),
+        ("0002_CP別_step0001-0005", "0002_CP別_"),
+    ]
+
+    for pszFolderName, pszPrefix in objConfig:
+        pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
+        os.makedirs(pszTargetDirectory, exist_ok=True)
+        for pszFileName in os.listdir(pszBaseDirectory):
+            if not pszFileName.startswith(pszPrefix):
+                continue
+            if "_step0004_" not in pszFileName:
+                continue
+            if not pszFileName.endswith("_vertical.tsv"):
+                continue
+            pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
+            if not os.path.isfile(pszSourcePath):
+                continue
+            pszDestinationPath: str = os.path.join(pszTargetDirectory, pszFileName)
+            shutil.move(pszSourcePath, pszDestinationPath)
+
+
 def find_selected_range_path(pszBaseDirectory: str) -> Optional[str]:
     objFileNames: List[str] = [
         "SellGeneralAdminCost_Allocation_Cmd_SelectedRange.txt",
@@ -4971,6 +4997,7 @@ def create_cumulative_reports(pszPlPath: str) -> None:
     copy_cp_management_excels(pszCompanyManagementPath, pszGroupManagementPath)
     create_pj_summary_gross_profit_ranking_excel(pszDirectory)
     create_pj_summary_sales_cost_sg_admin_margin_excel(pszDirectory)
+    move_cp_step_tsv_files_to_temp_subfolders(pszDirectory)
 
 
 def copy_cp_step0005_vertical_files(pszDirectory: str, objPaths: List[Optional[str]]) -> None:
