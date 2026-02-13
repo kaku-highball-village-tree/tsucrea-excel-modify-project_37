@@ -1280,31 +1280,71 @@ def move_cp_step_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
     pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
     os.makedirs(pszTempDirectory, exist_ok=True)
 
-    objConfigs: List[Tuple[str, str, List[str]]] = [
+    objMonths: List[str] = [
+        "2025年04月",
+        "2025年05月",
+        "2025年06月",
+        "2025年07月",
+        "2025年08月",
+        "2025年09月",
+        "2025年10月",
+        "2025年11月",
+        "2025年12月",
+    ]
+    objCumulativeRanges: List[str] = [
+        "2025年04月-2025年08月",
+        "2025年04月-2025年12月",
+        "2025年09月-2025年12月",
+    ]
+
+    def build_step0001_to_step0004_names(pszPrefix: str, iStartStep: int) -> List[str]:
+        objNames: List[str] = []
+        for iStep in range(iStartStep, 5):
+            pszStep: str = f"step{iStep:04d}"
+            for pszMonth in objMonths:
+                objNames.append(
+                    f"{pszPrefix}{pszStep}_単月_損益計算書_{pszMonth}.tsv"
+                )
+            for pszRange in objCumulativeRanges:
+                objNames.append(
+                    f"{pszPrefix}{pszStep}_累計_損益計算書_{pszRange}.tsv"
+                )
+        return objNames
+
+    def build_step0005_names(pszPrefix: str) -> List[str]:
+        objNames: List[str] = []
+        for pszMonth in objMonths:
+            objNames.append(
+                f"{pszPrefix}step0005_単月_損益計算書_{pszMonth}_vertical.tsv"
+            )
+        for pszRange in [
+            "2024年04月-2025年03月",
+            "2025年04月-2025年08月",
+            "2025年04月-2025年12月",
+            "2025年09月-2025年12月",
+        ]:
+            objNames.append(
+                f"{pszPrefix}step0005_累計_損益計算書_{pszRange}_vertical.tsv"
+            )
+        return objNames
+
+    objConfig: List[Tuple[str, List[str]]] = [
         (
             "0001_CP別_step0001-0005",
-            "0001_CP別_",
-            ["step0001_", "step0002_", "step0003_", "step0004_", "step0005_"],
+            build_step0001_to_step0004_names("0001_CP別_", 1)
+            + build_step0005_names("0001_CP別_"),
         ),
         (
             "0002_CP別_step0001-0005",
-            "0002_CP別_",
-            ["step0001_", "step0002_", "step0003_", "step0004_", "step0005_"],
+            build_step0001_to_step0004_names("0002_CP別_", 2)
+            + build_step0005_names("0002_CP別_"),
         ),
     ]
 
-    for pszFolderName, pszPrefix, objStepPrefixes in objConfigs:
-        pszTargetDirectory = os.path.join(pszTempDirectory, pszFolderName)
+    for pszFolderName, objFileNames in objConfig:
+        pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
         os.makedirs(pszTargetDirectory, exist_ok=True)
-
-        for pszFileName in os.listdir(pszBaseDirectory):
-            if not pszFileName.endswith(".tsv"):
-                continue
-            if not pszFileName.startswith(pszPrefix):
-                continue
-            bStepMatched: bool = any(f"_{pszStepPrefix}" in pszFileName for pszStepPrefix in objStepPrefixes)
-            if not bStepMatched:
-                continue
+        for pszFileName in objFileNames:
             pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
             if not os.path.isfile(pszSourcePath):
                 continue
