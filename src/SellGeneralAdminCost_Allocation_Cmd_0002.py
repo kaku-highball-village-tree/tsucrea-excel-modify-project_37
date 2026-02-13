@@ -1276,6 +1276,82 @@ def move_files_to_temp(objFilePaths: List[str], pszBaseDirectory: str) -> None:
         shutil.move(pszFilePath, pszTempPath)
 
 
+def move_cp_step_tsv_files_to_temp_subfolders(pszBaseDirectory: str) -> None:
+    pszTempDirectory: str = os.path.join(pszBaseDirectory, "temp")
+    os.makedirs(pszTempDirectory, exist_ok=True)
+
+    objMonths: List[str] = [
+        "2025年04月",
+        "2025年05月",
+        "2025年06月",
+        "2025年07月",
+        "2025年08月",
+        "2025年09月",
+        "2025年10月",
+        "2025年11月",
+        "2025年12月",
+    ]
+    objCumulativeRanges: List[str] = [
+        "2025年04月-2025年08月",
+        "2025年04月-2025年12月",
+        "2025年09月-2025年12月",
+    ]
+
+    def build_step0001_to_step0004_names(pszPrefix: str, iStartStep: int) -> List[str]:
+        objNames: List[str] = []
+        for iStep in range(iStartStep, 5):
+            pszStep: str = f"step{iStep:04d}"
+            for pszMonth in objMonths:
+                objNames.append(
+                    f"{pszPrefix}{pszStep}_単月_損益計算書_{pszMonth}.tsv"
+                )
+            for pszRange in objCumulativeRanges:
+                objNames.append(
+                    f"{pszPrefix}{pszStep}_累計_損益計算書_{pszRange}.tsv"
+                )
+        return objNames
+
+    def build_step0005_names(pszPrefix: str) -> List[str]:
+        objNames: List[str] = []
+        for pszMonth in objMonths:
+            objNames.append(
+                f"{pszPrefix}step0005_単月_損益計算書_{pszMonth}_vertical.tsv"
+            )
+        for pszRange in [
+            "2024年04月-2025年03月",
+            "2025年04月-2025年08月",
+            "2025年04月-2025年12月",
+            "2025年09月-2025年12月",
+        ]:
+            objNames.append(
+                f"{pszPrefix}step0005_累計_損益計算書_{pszRange}_vertical.tsv"
+            )
+        return objNames
+
+    objConfig: List[Tuple[str, List[str]]] = [
+        (
+            "0001_CP別_step0001-0005",
+            build_step0001_to_step0004_names("0001_CP別_", 1)
+            + build_step0005_names("0001_CP別_"),
+        ),
+        (
+            "0002_CP別_step0001-0005",
+            build_step0001_to_step0004_names("0002_CP別_", 2)
+            + build_step0005_names("0002_CP別_"),
+        ),
+    ]
+
+    for pszFolderName, objFileNames in objConfig:
+        pszTargetDirectory: str = os.path.join(pszTempDirectory, pszFolderName)
+        os.makedirs(pszTargetDirectory, exist_ok=True)
+        for pszFileName in objFileNames:
+            pszSourcePath: str = os.path.join(pszBaseDirectory, pszFileName)
+            if not os.path.isfile(pszSourcePath):
+                continue
+            pszDestinationPath: str = os.path.join(pszTargetDirectory, pszFileName)
+            shutil.move(pszSourcePath, pszDestinationPath)
+
+
 def find_selected_range_path(pszBaseDirectory: str) -> Optional[str]:
     objFileNames: List[str] = [
         "SellGeneralAdminCost_Allocation_Cmd_SelectedRange.txt",
@@ -4971,6 +5047,7 @@ def create_cumulative_reports(pszPlPath: str) -> None:
     copy_cp_management_excels(pszCompanyManagementPath, pszGroupManagementPath)
     create_pj_summary_gross_profit_ranking_excel(pszDirectory)
     create_pj_summary_sales_cost_sg_admin_margin_excel(pszDirectory)
+    move_cp_step_tsv_files_to_temp_subfolders(pszDirectory)
 
 
 def copy_cp_step0005_vertical_files(pszDirectory: str, objPaths: List[Optional[str]]) -> None:
